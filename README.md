@@ -144,7 +144,7 @@ fan:
 | `name`            | Yes      | string       |           | The name of the fan in Home Assistant.                                      |
 | `platform`        | Yes      | string       |           | Must be `quiet_cool`.                                                       |
 | `cs_pin`          | Yes      | int          |           | SPI chip select pin for CC1101.                                             |
-| `gdo0_pin`        | Yes      | int          |           | GDO0 pin from CC1101 (used for TX status).                                  |
+| `gdo0_pin`        | Yes      | int          |           | GDO0 pin from CC1101 (used for TX/RX packet-complete signaling).             |
 | `gdo2_pin`        | Yes      | int          |           | GDO2 pin from CC1101 (can be -1 if unused).                                 |
 | `remote_id`       | Yes      | list[hex]    |           | 7-byte unique ID for your remote (see above).                               |
 | `center_freq_mhz` | No       | float        | 433.897    | Center frequency in MHz for RF transmission.                                |
@@ -158,6 +158,23 @@ spi:
   mosi_pin: 23
   miso_pin: 19
 ```
+
+## Physical Remote State Tracking
+
+The component listens for the configured `remote_id` whenever it is not
+transmitting. A valid physical-remote command updates the ESPHome/Home
+Assistant fan power and speed state. The three repeated RF frames sent for a
+single button press are deduplicated automatically.
+
+Timed commands (1, 2, 4, 8, or 12 hours) also start a local countdown so the
+published state changes to off when the requested duration elapses. An `ON`
+or `OFF` command cancels that countdown.
+
+This is command tracking rather than feedback from the fan itself: the fan
+does not transmit an acknowledgement or current status. A missed RF command,
+a command from a different remote ID, or a fan power interruption can
+therefore leave the published state out of sync until the next matching
+command is received.
 
 ## Recent Improvements
 
