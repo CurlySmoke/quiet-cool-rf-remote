@@ -31,16 +31,20 @@ namespace esphome {
 		this->center_freq_mhz = center_freq_mhz;
 		this->deviation_khz = deviation_khz;
 	    }
+            void set_speed_count(uint8_t speed_count) { this->speed_count_ = speed_count; }
 
         protected:
             void control(const fan::FanCall &call) override;
             void apply_received_command_(const QuietCoolCommand &command);
+            QuietCoolSpeed to_radio_speed_(int speed) const;
+            int from_radio_speed_(QuietCoolSpeed speed) const;
         private:
             std::unique_ptr<QuietCool> qc_;
 
             uint8_t csn_pin_{};
             uint8_t gdo0_pin_{};
             uint8_t gdo2_pin_{};
+	    uint8_t speed_count_{3};
 	    float center_freq_mhz{433.897};
 	    float deviation_khz{10};
             bool pins_set_{false};

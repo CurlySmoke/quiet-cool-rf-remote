@@ -131,6 +131,7 @@ fan:
     gdo2_pin: 12
     remote_id: [0x2D, 0xD4, 0x06, 0xCB, 0x00, 0xF7, 0xF2]
     # Optional:
+    # speed_count: 2
     # center_freq_mhz: 433.897
     # deviation_khz: 10
 ```
@@ -147,6 +148,7 @@ fan:
 | `gdo0_pin`        | Yes      | int          |           | GDO0 pin from CC1101 (used for TX/RX packet-complete signaling).             |
 | `gdo2_pin`        | Yes      | int          |           | GDO2 pin from CC1101 (can be -1 if unused).                                 |
 | `remote_id`       | Yes      | list[hex]    |           | 7-byte unique ID for your remote (see above).                               |
+| `speed_count`     | No       | int (2 or 3) | 3         | Set to `2` for LOW/HIGH fans, or `3` for LOW/MEDIUM/HIGH fans.               |
 | `center_freq_mhz` | No       | float        | 433.897    | Center frequency in MHz for RF transmission.                                |
 | `deviation_khz`   | No       | float        | 10         | Frequency deviation (spread) in kHz for FSK modulation.                     |
 
@@ -175,6 +177,10 @@ does not transmit an acknowledgement or current status. A missed RF command,
 a command from a different remote ID, or a fan power interruption can
 therefore leave the published state out of sync until the next matching
 command is received.
+
+For a two-speed fan, set `speed_count: 2`. ESPHome/Home Assistant will then
+expose two speeds, map speed 1 to the LOW RF command, and map speed 2 to HIGH.
+The default value of `3` retains the LOW/MEDIUM/HIGH behavior.
 
 ## Recent Improvements
 

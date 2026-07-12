@@ -24,7 +24,28 @@ namespace esphome {
         }
 
         fan::FanTraits QuietCoolFan::get_traits() {
-            return fan::FanTraits(false, true, false, 3);
+            return fan::FanTraits(false, true, false, this->speed_count_);
+        }
+
+        QuietCoolSpeed QuietCoolFan::to_radio_speed_(int speed) const {
+            if (speed <= 1)
+                return QUIETCOOL_SPEED_LOW;
+            if (this->speed_count_ == 2 || speed >= 3)
+                return QUIETCOOL_SPEED_HIGH;
+            return QUIETCOOL_SPEED_MEDIUM;
+        }
+
+        int QuietCoolFan::from_radio_speed_(QuietCoolSpeed speed) const {
+            switch (speed) {
+                case QUIETCOOL_SPEED_LOW:
+                    return 1;
+                case QUIETCOOL_SPEED_MEDIUM:
+                    return this->speed_count_ == 3 ? 2 : 0;
+                case QUIETCOOL_SPEED_HIGH:
+                    return this->speed_count_;
+                default:
+                    return 0;
+            }
         }
 
         void QuietCoolFan::loop() {
@@ -58,12 +79,7 @@ namespace esphome {
                 qcdur = QUIETCOOL_DURATION_OFF;
             } else {
                 qcdur = QUIETCOOL_DURATION_ON;
-                if (requested_speed <= 1)
-                    qcspd = QUIETCOOL_SPEED_LOW;
-                else if (requested_speed == 2)
-                    qcspd = QUIETCOOL_SPEED_MEDIUM;
-                else
-                    qcspd = QUIETCOOL_SPEED_HIGH;
+                qcspd = this->to_radio_speed_(requested_speed);
             }
 
             if (this->qc_ != nullptr)
@@ -71,7 +87,7 @@ namespace esphome {
 
             this->state = requested_state;
             if (requested_state)
-                this->speed = std::max(1, std::min(3, requested_speed));
+                this->speed = std::max(1, std::min(static_cast<int>(this->speed_count_), requested_speed));
             this->remote_timer_active_ = false;
 
             ESP_LOGV(TAG, "Post-update internal state: state=%s speed=%d",
@@ -84,20 +100,13 @@ namespace esphome {
                 this->state = false;
                 this->remote_timer_active_ = false;
             } else {
-                this->state = true;
-                switch (command.speed) {
-                    case QUIETCOOL_SPEED_LOW:
-                        this->speed = 1;
-                        break;
-                    case QUIETCOOL_SPEED_MEDIUM:
-                        this->speed = 2;
-                        break;
-                    case QUIETCOOL_SPEED_HIGH:
-                        this->speed = 3;
-                        break;
-                    default:
-                        return;
+                const int received_speed = this->from_radio_speed_(command.speed);
+                if (received_speed == 0) {
+                    ESP_LOGW(TAG, "Ignoring MEDIUM command configured for a 2-speed fan");
+                    return;
                 }
+                this->state = true;
+                this->speed = received_speed;
 
                 if (command.duration == QUIETCOOL_DURATION_ON) {
                     this->remote_timer_active_ = false;
@@ -114,6 +123,9 @@ namespace esphome {
             this->publish_state();
         }
 
-        void QuietCoolFan::dump_config() { LOG_FAN("", "QuietCool fan", this); }
+        void QuietCoolFan::dump_config() {
+            LOG_FAN("", "QuietCool fan", this);
+            ESP_LOGCONFIG(TAG, "  Speed count: %u", this->speed_count_);
+        }
     }  // namespace quiet_cool
 }  // namespace esphome
