@@ -15,7 +15,7 @@ Lame, I know.  Whatcha gonna do?
 ![QuietCool Remote](images/quietcool_fan.png)
 
 # TL;DR -- get it running on ESPHome
-Get a generateic CC1101 board.  Like this [CC1101 Board](https://www.amazon.com/dp/B0D3W9GVRQ?ref=ppx_yo2ov_dt_b_fed_asin_title)
+Get a generic CC1101 board.  Like this [CC1101 Board](https://www.amazon.com/dp/B0D3W9GVRQ?ref=ppx_yo2ov_dt_b_fed_asin_title)
 
 ![CC1101](images/41x16EagV+L._SL1000_.jpg)
 
@@ -236,7 +236,7 @@ The source is here [in OnShape](https://cad.onshape.com/documents/23ba2be84b2f4d
 I used an RTL-SDR.COM SDR like this:
 ![RTL-SDR v3](images/rtl-sdrv3-500.jpg)
 
-And for software, I used Universal Radio Haacker.  Here's a recording of all the signals as they progress from H 1 2 4 8 12 ON OFF -> to medium -> low.  It was recorded with these settings
+And for software, I used Universal Radio Hacker.  Here's a recording of all the signals as they progress from H 1 2 4 8 12 ON OFF -> to medium -> low.  It was recorded with these settings
 
 ![Settings](images/record-settings.png)
 
