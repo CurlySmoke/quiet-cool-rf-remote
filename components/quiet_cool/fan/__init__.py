@@ -7,6 +7,8 @@ from esphome.const import (
     CONF_OUTPUT,
     CONF_OUTPUT_ID,
 )
+from esphome.core import CORE
+
 from .. import quiet_cool_ns
 
 # Additional pin configuration keys
@@ -33,6 +35,13 @@ CONFIG_SCHEMA = fan.fan_schema(QuietCoolFan).extend(
 
 
 async def to_code(config):
+    # ELECHOUSE_CC1101_SRC_DRV.cpp includes <SPI.h> directly. On ESP32 Arduino
+    # builds, ESPHome now disables bundled Arduino libraries by default, so we
+    # have to explicitly re-enable SPI or the build fails with
+    # "fatal error: SPI.h: No such file or directory".
+    if CORE.is_esp32 and CORE.using_arduino:
+        cg.add_library("SPI", None)  # None = use the version bundled with the Arduino framework
+
     var = cg.new_Pvariable(config[CONF_OUTPUT_ID])  # type: QuietCoolFan
     await cg.register_component(var, config)
     await fan.register_fan(var, config)
