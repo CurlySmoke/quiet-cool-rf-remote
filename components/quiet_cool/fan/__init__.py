@@ -6,6 +6,7 @@ from esphome.const import (
     CONF_OSCILLATION_OUTPUT,
     CONF_OUTPUT,
     CONF_OUTPUT_ID,
+    CONF_SPEED_COUNT,
 )
 from esphome.core import CORE
 
@@ -22,12 +23,21 @@ DEPENDENCIES = ["spi"]
 
 QuietCoolFan = quiet_cool_ns.class_("QuietCoolFan", cg.Component, fan.Fan, spi.SPIDevice)
 
+
+def validate_remote_id(value):
+    value = cv.ensure_list(cv.hex_uint8_t)(value)
+    if len(value) != 7:
+        raise cv.Invalid("remote_id must contain exactly 7 bytes")
+    return value
+
+
 CONFIG_SCHEMA = fan.fan_schema(QuietCoolFan).extend(
     {
         cv.GenerateID(CONF_OUTPUT_ID): cv.declare_id(QuietCoolFan),
         cv.Required(CONF_GDO0_PIN                      ): cv.uint8_t,
         cv.Required(CONF_GDO2_PIN                      ): cv.uint8_t,
-        cv.Required(CONF_REMOTE_ID                     ): cv.ensure_list(cv.hex_uint8_t),
+        cv.Required(CONF_REMOTE_ID                     ): validate_remote_id,
+        cv.Optional(CONF_SPEED_COUNT  , default=3      ): cv.one_of(2, 3, int=True),
         cv.Optional(CONF_FREQ_MHZ     , default=433.897): cv.float_,
         cv.Optional(CONF_DEVIATION_KHZ, default=10.0   ): cv.float_
     }
@@ -50,4 +60,5 @@ async def to_code(config):
     cs_num = config[spi.CONF_CS_PIN]["number"]
     cg.add(var.set_pins(cs_num, config[CONF_GDO0_PIN], config[CONF_GDO2_PIN]))
     cg.add(var.set_remote_id(config[CONF_REMOTE_ID]))
+    cg.add(var.set_speed_count(config[CONF_SPEED_COUNT]))
     cg.add(var.set_frequencies(config[CONF_FREQ_MHZ], config[CONF_DEVIATION_KHZ]))
